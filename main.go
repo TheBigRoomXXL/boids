@@ -1,20 +1,25 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 	"math/rand"
+	"os"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+const NUMBER_BOIDS = 200
 const TARGET_FRAMERATE = 60
 const RADIUS_BOID = 5
 const RADIUS_AVOIDANCE = 500
 const RADIUS_VIEW = 8000
 
-var screenHeigh = 800
-var screenWidth = 800
+var debug = false
+
+var screenHeigh = 768
+var screenWidth = 1024
 var speedMax = 0.0125 * float32(screenWidth)
 var speedMin = 0.00375 * float32(screenWidth)
 
@@ -34,22 +39,16 @@ func NewBoid() *Boid {
 			Y: rand.Float32() * float32(screenHeigh) / 1.25,
 		},
 		Vel: rl.Vector2{
-			X: 3.0 + rand.Float32(),
-			Y: 3.0 + rand.Float32(),
+			X: rand.Float32() - 0.5,
+			Y: rand.Float32() - 0.5,
 		},
 	}
 }
 
-func (b *Boid) Draw(debug bool) {
+func (b *Boid) Draw() {
 	direction := rl.Vector2{X: b.Pos.X + b.Vel.X*2, Y: b.Pos.Y + b.Vel.Y*2}
 	rl.DrawCircleV(b.Pos, RADIUS_BOID, rl.Blue)
 	rl.DrawLineV(b.Pos, direction, rl.Blue)
-	if debug {
-		a := math.Sqrt(RADIUS_AVOIDANCE)
-		v := math.Sqrt(RADIUS_VIEW)
-		rl.DrawCircleLines(int32(b.Pos.X), int32(b.Pos.Y), float32(a), color.RGBA{200, 0, 0, 150})
-		rl.DrawCircleLines(int32(b.Pos.X), int32(b.Pos.Y), float32(v), color.RGBA{0, 200, 0, 150})
-	}
 }
 
 // Baseline implementation, adapted from:
@@ -63,8 +62,8 @@ func BoidV0() {
 
 	rl.SetTargetFPS(60)
 
-	boids := [50]Boid{}
-	for i := 0; i < 50; i++ {
+	boids := [NUMBER_BOIDS]Boid{}
+	for i := 0; i < NUMBER_BOIDS; i++ {
 		boids[i] = *NewBoid()
 	}
 
@@ -174,18 +173,23 @@ func BoidV0() {
 
 		// Draw update
 		rl.BeginDrawing()
+
 		rl.ClearBackground(color.RGBA{22, 23, 31, 255})
 		for i := 0; i < len(boids); i++ {
-			// if i == 0 {
-			// 	boids[i].Draw(true)
-			// 	continue
-			// }
-			boids[i].Draw(false)
+			boids[i].Draw()
+		}
+
+		if debug {
+			rl.DrawText(fmt.Sprint("FPS: ", rl.GetFPS()), 20, 20, 20, rl.LightGray)
+
 		}
 		rl.EndDrawing()
 	}
 }
 
 func main() {
+	if len(os.Args) >= 2 && os.Args[1] == "--debug" {
+		debug = true
+	}
 	BoidV0()
 }
